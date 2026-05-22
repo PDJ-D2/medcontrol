@@ -1,5 +1,3 @@
-
-
 # MedControl
 
 O MedControl é uma aplicação simples para controle de medicamentos, feita com .NET 10, EF Core, SQLite e React.
@@ -113,6 +111,64 @@ Resposta esperada:
   "status": "ok"
 }
 ```
+
+## Configuração de variáveis locais
+
+Este projeto não versiona dados sensíveis, como chave JWT, senha de e-mail, token SMTP ou banco SQLite local.
+
+O arquivo `server/appsettings.json` contém apenas valores de exemplo e pode ser mantido no repositório público.
+
+Para configurar o projeto na sua máquina:
+
+1. Copie o arquivo:
+
+   server/appsettings.Example.json
+
+2. Renomeie a cópia para:
+
+   server/appsettings.Local.json
+
+3. Preencha os valores locais:
+
+   - Jwt:SigningKey
+   - Email:From
+   - Email:SmtpHost
+   - Email:SmtpPort
+   - Email:Username
+   - Email:Password
+
+Exemplo:
+
+{
+  "Jwt": {
+    "SigningKey": "sua-chave-secreta-com-pelo-menos-32-caracteres"
+  },
+  "Email": {
+    "From": "seu-email@gmail.com",
+    "SmtpHost": "smtp.gmail.com",
+    "SmtpPort": 587,
+    "UseSsl": true,
+    "Username": "seu-email@gmail.com",
+    "Password": "sua-senha-de-app-ou-token-smtp"
+  }
+}
+
+O arquivo `appsettings.Local.json` está no `.gitignore` e não deve ser enviado para o GitHub.
+
+Também são ignorados os arquivos de banco local gerados pelo SQLite:
+
+- *.db
+- *.db-shm
+- *.db-wal
+
+Em produção, prefira configurar esses valores por variáveis de ambiente:
+
+- Jwt__SigningKey
+- Email__From
+- Email__SmtpHost
+- Email__SmtpPort
+- Email__Username
+- Email__Password
 
 ## Como rodar o frontend
 
