@@ -285,6 +285,23 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# Frontend build output
+client/dist/
+
+# Local app data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Local secrets/config overrides
+appsettings.Local.json
+appsettings.*.Local.json
+server/appsettings.Local.json
+server/appsettings.*.Local.json
+server/appsettings.Production.json
+
 # Visual Studio 6 build log
 *.plg
 
