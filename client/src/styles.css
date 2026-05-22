@@ -29,6 +29,62 @@ button {
   padding: 32px 0 48px;
 }
 
+.auth-shell {
+  align-items: center;
+  display: grid;
+  gap: 32px;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 420px);
+  min-height: 100vh;
+  padding: 32px;
+  width: min(1100px, 100%);
+  margin: 0 auto;
+}
+
+.auth-hero h1 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  letter-spacing: 0;
+  line-height: 1.05;
+  margin: 6px 0 14px;
+}
+
+.auth-hero p {
+  color: #62706a;
+  margin: 0;
+  max-width: 560px;
+}
+
+.auth-panel {
+  width: 100%;
+}
+
+.auth-tabs {
+  background: #f1f4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 18px;
+  padding: 4px;
+}
+
+.auth-tabs button,
+.link-button {
+  border: 0;
+  font-weight: 800;
+}
+
+.auth-tabs button {
+  background: transparent;
+  border-radius: 6px;
+  color: #596963;
+  min-height: 38px;
+}
+
+.auth-tabs button.active {
+  background: #ffffff;
+  color: #226452;
+}
+
 .app-header {
   align-items: center;
   display: flex;
@@ -293,6 +349,75 @@ textarea:focus {
   padding: 12px 14px;
 }
 
+.success-alert {
+  background: #e9f5f0;
+  border: 1px solid #b8dacd;
+  border-radius: 8px;
+  color: #226452;
+  font-weight: 700;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+}
+
+.link-button {
+  background: transparent;
+  color: #2d7c66;
+  margin: -2px 0 14px;
+  padding: 0;
+  text-align: left;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.password-strength {
+  display: grid;
+  gap: 8px;
+  margin: -2px 0 14px;
+}
+
+.strength-header {
+  color: #53635d;
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 800;
+  justify-content: space-between;
+}
+
+.strength-track {
+  background: #e6ece5;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.strength-track div {
+  background: #2d7c66;
+  height: 100%;
+  transition: width 160ms ease;
+}
+
+.password-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.password-rules span {
+  background: #f2f3f0;
+  border-radius: 999px;
+  color: #6c7873;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 5px 8px;
+}
+
+.password-rules span.met {
+  background: #e9f5f0;
+  color: #226452;
+}
+
 .medication-list,
 .intake-list {
   display: grid;
@@ -386,7 +511,8 @@ textarea:focus {
 
 @media (max-width: 920px) {
   .app-header,
-  .content-grid {
+  .content-grid,
+  .auth-shell {
     grid-template-columns: 1fr;
   }
 

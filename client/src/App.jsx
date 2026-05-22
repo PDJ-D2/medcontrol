@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, RefreshCw } from 'lucide-react';
+import { Activity, LogOut, RefreshCw } from 'lucide-react';
 import {
   archiveMedication,
   createMedication,
@@ -11,6 +11,7 @@ import {
 import { MedicationForm } from './components/MedicationForm.jsx';
 import { MedicationList } from './components/MedicationList.jsx';
 import { TodayIntakes } from './components/TodayIntakes.jsx';
+import { AuthScreen } from './components/AuthScreen.jsx';
 import { everyDay } from './constants/scheduleDays.js';
 
 function todayInputValue() {
@@ -30,6 +31,11 @@ const initialForm = {
 };
 
 export function App() {
+  const [auth, setAuth] = useState(() => {
+    const token = localStorage.getItem('medcontrol.token');
+    const user = localStorage.getItem('medcontrol.user');
+    return token && user ? { token, user: JSON.parse(user) } : null;
+  });
   const [medications, setMedications] = useState([]);
   const [intakes, setIntakes] = useState([]);
   const [form, setForm] = useState(initialForm);
@@ -61,8 +67,28 @@ export function App() {
   }
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (auth) {
+      loadData();
+    }
+  }, [auth]);
+
+  function handleAuthenticated(result) {
+    localStorage.setItem('medcontrol.token', result.token);
+    localStorage.setItem('medcontrol.user', JSON.stringify(result.user));
+    setAuth(result);
+  }
+
+  function logout() {
+    localStorage.removeItem('medcontrol.token');
+    localStorage.removeItem('medcontrol.user');
+    setAuth(null);
+    setMedications([]);
+    setIntakes([]);
+  }
+
+  if (!auth) {
+    return <AuthScreen onAuthenticated={handleAuthenticated} />;
+  }
 
   function resetForm() {
     setForm(initialForm);
@@ -141,6 +167,10 @@ export function App() {
         <button className="secondary-button" type="button" onClick={loadData} disabled={isLoading}>
           <RefreshCw size={18} />
           Atualizar
+        </button>
+        <button className="secondary-button" type="button" onClick={logout}>
+          <LogOut size={18} />
+          Sair
         </button>
       </header>
 

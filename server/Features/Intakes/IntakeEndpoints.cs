@@ -1,6 +1,8 @@
 using MedControl.Api.Data;
 using MedControl.Api.Domain;
+using MedControl.Api.Infrastructure.Auth;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace MedControl.Api.Features.Intakes;
 
@@ -8,10 +10,11 @@ public static class IntakeEndpoints
 {
     public static IEndpointRouteBuilder MapIntakeEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/intakes").WithTags("Intakes");
+        var group = app.MapGroup("/api/intakes").WithTags("Intakes").RequireAuthorization();
 
-        group.MapGet("/today", async (DateOnly? date, AppDbContext db) =>
+        group.MapGet("/today", async (DateOnly? date, AppDbContext db, ClaimsPrincipal user) =>
         {
+            var userId = user.GetUserId();
             var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
             var start = targetDate.ToDateTime(TimeOnly.MinValue);
             var end = targetDate.ToDateTime(TimeOnly.MaxValue);
@@ -19,12 +22,12 @@ public static class IntakeEndpoints
 
             var medications = await db.Medications
                 .Include(m => m.Schedules)
-                .Where(m => m.IsActive && m.StartDate <= targetDate && (m.EndDate == null || m.EndDate >= targetDate))
+                .Where(m => m.UserId == userId && m.IsActive && m.StartDate <= targetDate && (m.EndDate == null || m.EndDate >= targetDate))
                 .AsNoTracking()
                 .ToListAsync();
 
             var logs = await db.MedicationIntakeLogs
-                .Where(l => l.ScheduledFor >= start && l.ScheduledFor <= end)
+                .Where(l => l.UserId == userId && l.ScheduledFor >= start && l.ScheduledFor <= end)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -58,16 +61,18 @@ public static class IntakeEndpoints
         group.MapPost("/medications/{medicationId:guid}", async (
             Guid medicationId,
             RecordIntakeRequest request,
-            AppDbContext db) =>
+            AppDbContext db,
+            ClaimsPrincipal user) =>
         {
-            var medication = await db.Medications.FirstOrDefaultAsync(m => m.Id == medicationId);
+            var userId = user.GetUserId();
+            var medication = await db.Medications.FirstOrDefaultAsync(m => m.Id == medicationId && m.UserId == userId);
             if (medication is null)
             {
                 return Results.NotFound();
             }
 
             var existingLog = await db.MedicationIntakeLogs.FirstOrDefaultAsync(l =>
-                l.MedicationId == medicationId && l.ScheduledFor == request.ScheduledFor);
+                l.UserId == userId && l.MedicationId == medicationId && l.ScheduledFor == request.ScheduledFor);
 
             var wasTaken = existingLog?.Status == IntakeStatus.Taken;
 
@@ -75,6 +80,7 @@ public static class IntakeEndpoints
             {
                 existingLog = new MedicationIntakeLog
                 {
+                    UserId = userId,
                     MedicationId = medicationId,
                     ScheduledFor = request.ScheduledFor
                 };

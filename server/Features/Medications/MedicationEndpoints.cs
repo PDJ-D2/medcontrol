@@ -1,6 +1,8 @@
 using MedControl.Api.Data;
 using MedControl.Api.Domain;
+using MedControl.Api.Infrastructure.Auth;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace MedControl.Api.Features.Medications;
 
@@ -8,12 +10,14 @@ public static class MedicationEndpoints
 {
     public static IEndpointRouteBuilder MapMedicationEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/medications").WithTags("Medications");
+        var group = app.MapGroup("/api/medications").WithTags("Medications").RequireAuthorization();
 
-        group.MapGet("/", async (AppDbContext db, bool includeInactive = false) =>
+        group.MapGet("/", async (AppDbContext db, ClaimsPrincipal user, bool includeInactive = false) =>
         {
+            var userId = user.GetUserId();
             var query = db.Medications
                 .Include(m => m.Schedules)
+                .Where(m => m.UserId == userId)
                 .AsNoTracking();
 
             if (!includeInactive)
@@ -29,17 +33,18 @@ public static class MedicationEndpoints
             return Results.Ok(medications);
         });
 
-        group.MapGet("/{id:guid}", async (Guid id, AppDbContext db) =>
+        group.MapGet("/{id:guid}", async (Guid id, AppDbContext db, ClaimsPrincipal user) =>
         {
+            var userId = user.GetUserId();
             var medication = await db.Medications
                 .Include(m => m.Schedules)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
             return medication is null ? Results.NotFound() : Results.Ok(medication.ToResponse());
         });
 
-        group.MapPost("/", async (MedicationRequest request, AppDbContext db) =>
+        group.MapPost("/", async (MedicationRequest request, AppDbContext db, ClaimsPrincipal user) =>
         {
             var validationError = Validate(request);
             if (validationError is not null)
@@ -48,6 +53,7 @@ public static class MedicationEndpoints
             }
 
             var medication = new Medication();
+            medication.UserId = user.GetUserId();
             Apply(request, medication);
 
             db.Medications.Add(medication);
@@ -56,11 +62,12 @@ public static class MedicationEndpoints
             return Results.Created($"/api/medications/{medication.Id}", medication.ToResponse());
         });
 
-        group.MapPut("/{id:guid}", async (Guid id, MedicationRequest request, AppDbContext db) =>
+        group.MapPut("/{id:guid}", async (Guid id, MedicationRequest request, AppDbContext db, ClaimsPrincipal user) =>
         {
+            var userId = user.GetUserId();
             var medication = await db.Medications
                 .Include(m => m.Schedules)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
             if (medication is null)
             {
@@ -80,9 +87,10 @@ public static class MedicationEndpoints
             return Results.Ok(medication.ToResponse());
         });
 
-        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db) =>
+        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, ClaimsPrincipal user) =>
         {
-            var medication = await db.Medications.FirstOrDefaultAsync(m => m.Id == id);
+            var userId = user.GetUserId();
+            var medication = await db.Medications.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
             if (medication is null)
             {
                 return Results.NotFound();
